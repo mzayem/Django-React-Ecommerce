@@ -21,9 +21,11 @@ from django.conf import settings
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 
 urlpatterns = [
+    path('', include('home.urls')),
+    path('product/', include('products.urls')),
+
     path('admin/', admin.site.urls),
     path('account/', include('accounts.urls')),
-    path('', include('home.urls')),
 ]
 
 
