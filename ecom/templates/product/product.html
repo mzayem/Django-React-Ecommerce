@@ -1,6 +1,27 @@
 {% extends "base/base.html" %}
 
 {% block start %} 
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentSize = urlParams.get('size');
+      const currentColor = urlParams.get('color');
+
+      // If size or color is missing, set default values
+      if (!currentSize || !currentColor) {
+          const defaultSize = "{{ selected_size }}";
+          const defaultColor = "{{ selected_color }}";
+
+          // Update URL with default size and color
+          urlParams.set('size', defaultSize);
+          urlParams.set('color', defaultColor);
+
+          // Redirect to the updated URL
+          const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+          window.location.href = newUrl;
+      }
+  });
+</script>
 <section class="section-content padding-y bg">
     <div class="container">
     
@@ -9,21 +30,25 @@
         <div class="row no-gutters">
             <aside class="col-md-6">
     <article class="gallery-wrap"> 
-    <div class="img-big-wrap">
-      <div> <a href="#"><img src="../images/items/3.jpg"></a></div>
+    <div class="img-big-wrap overflow-hidden">
+      <div> <a href="#">
+      <img 
+        src="/media/{{product.product_images.first.image}}" 
+        alt="{{product.product_name}} image main"
+        class="img-fluid w-full h-auto object-fit-cover">
+      </a></div>
     </div> <!-- slider-product.// -->
     <div class="thumbs-wrap">
-      <a href="#" class="item-thumb"> <img src="../images/items/1.jpg"></a>
-      <a href="#" class="item-thumb"> <img src="../images/items/2.jpg"></a>
-      <a href="#" class="item-thumb"> <img src="../images/items/3.jpg"></a>
-      <a href="#" class="item-thumb"> <img src="../images/items/4.jpg"></a>
+      {%for image in product.product_images.all%}
+      <a href="#" class="item-thumb"> <img src="/media/{{image.image}}" alt="{{product.product_name}} image {{ forloop.counter }}"></a>
+      {%endfor%}
     </div> <!-- slider-nav.// -->
     </article> <!-- gallery-wrap .end// -->
             </aside>
             <main class="col-md-6 border-left">
     <article class="content-body">
     
-    <h2 class="title">Off-White Odsy-1000 Low-Top Sneakers</h2>
+    <h2 class="title">{{product.product_name}}</h2>
     
     <div class="rating-wrap my-3">
         <ul class="rating-stars">
@@ -43,19 +68,25 @@
     </div> <!-- rating-wrap.// -->
     
     <div class="mb-3"> 
-        <var class="price h4">$815.00</var> 
-        <span class="text-muted">/per kg</span> 
+        <var class="price h4">$
+          {%if updated_price%}
+          {{updated_price}}
+          {%else%}
+          {{product.price}}
+          {%endif%}.00
+        </var>
+        <span class="text-muted">/per piece</span> 
     </div> <!-- price-detail-wrap .// -->
     
-    <p>Virgil Abloh’s Off-White is a streetwear-inspired collection that continues to break away from the conventions of mainstream fashion. Made in Italy, these black and brown Odsy-1000 low-top sneakers.</p>
+    <p>{{product.description}}</p>
     
     
     <dl class="row">
       <dt class="col-sm-3">Model#</dt>
-      <dd class="col-sm-9">Odsy-1000</dd>
+      <dd class="col-sm-9">{{product.modal_number}}</dd>
     
       <dt class="col-sm-3">Color</dt>
-      <dd class="col-sm-9">Brown</dd>
+      <dd class="col-sm-9">{{ selected_color|capfirst}}</dd>
     
       <dt class="col-sm-3">Delivery</dt>
       <dd class="col-sm-9">Russia, USA, and Europe </dd>
@@ -75,26 +106,45 @@
                   </div>
                 </div>
             </div> <!-- col.// -->
-            <div class="form-group col-md">
-                    <label>Select size</label>
-                    <div class="mt-1">
-                        <label class="custom-control custom-radio custom-control-inline">
-                          <input type="radio" name="select_size" checked="" class="custom-control-input">
-                          <div class="custom-control-label">Small</div>
-                        </label>
-    
-                        <label class="custom-control custom-radio custom-control-inline">
-                          <input type="radio" name="select_size" class="custom-control-input">
-                          <div class="custom-control-label">Medium</div>
-                        </label>
-    
-                        <label class="custom-control custom-radio custom-control-inline">
-                          <input type="radio" name="select_size" class="custom-control-input">
-                          <div class="custom-control-label">Large</div>
-                        </label>
-    
-                    </div>
-            </div> <!-- col.// -->
+            {% if product.size_variant.count %}
+  <div class="form-group col-md">
+    <label>Select size</label>
+    <div class="mt-1">
+      {% for size in product.size_variant.all %}
+        <label class="custom-control custom-radio custom-control-inline">
+          <input 
+            type="radio" 
+            onchange="get_correct_price('{{size.size_name}}', '{{selected_color}}')"
+            {% if selected_size == size.size_name %} checked {% endif %}
+            name="select_size" 
+            class="custom-control-input">
+          <div class="custom-control-label">{{ size.size_name }}</div>
+        </label>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+{% if product.color_variant.count %}
+  <div class="form-group col-md">
+    <label>Select color</label>
+    <div class="mt-1">
+      {% for color in product.color_variant.all %}
+        <label class="custom-control custom-radio custom-control-inline">
+          <input 
+            type="radio" 
+            onchange="get_correct_price('{{selected_size}}', '{{color.color_name}}')" 
+            {% if selected_color == color.color_name %} checked {% endif %}
+            name="select_color" 
+            class="custom-control-input">
+          <div class="custom-control-label">{{ color.color_name }}</div>
+        </label>
+      {% endfor %}
+    </div>
+  </div>
+{% endif %}
+
+
         </div> <!-- row.// -->
     
         <a href="#" class="btn  btn-primary"> Buy now </a>
@@ -108,4 +158,9 @@
 
     </div>
     </section>
+    <script>
+      function get_correct_price(size, color) {
+        window.location.href = window.location.pathname + `?size=${size}&color=${color}`;
+      }
+    </script>
 {% endblock %}
