@@ -1,5 +1,7 @@
 from django.shortcuts import render
 from products.models import Product
+from accounts.models import Cart, CartItem
+from django.http import HttpResponseRedirect
 
 # Create your views here.
 
@@ -23,7 +25,6 @@ def get_product(request, slug):
            
             price = product.get_product_price_by_variant(size, color)
             context['updated_price'] = price
-            print(price)
 
             price = product.get_product_price_by_variant(size, color)
             context['updated_price'] = price
@@ -32,3 +33,33 @@ def get_product(request, slug):
         return render(request, 'product/product.html', context=context)
     except Exception as e:
         print(e)
+
+def add_to_cart(request, uid):
+    size = request.GET.get('size')
+    color = request.GET.get('color')
+
+    try:
+        product = Product.objects.get(uid=uid)
+        user = request.user
+        cart, _ = Cart.objects.get_or_create(user=user, is_paid=False)
+
+        # Create CartItem without 'size' and 'color' arguments
+        cart_item = CartItem(cart=cart, product=product)
+        print(size)
+        print(color)
+        if size:
+            size_variant = product.size_variant.get(size_name=size)
+            cart_item.sizeVariant = size_variant
+
+       
+        if color:
+            color_variant = product.color_variant.get(color_name=color)  # Corrected to color_name
+            cart_item.colorVariant = color_variant
+
+
+        cart_item.save()
+
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+    except Product.DoesNotExist:
+        return HttpResponseRedirect('/')  # Redirect to home or show error if product is not found

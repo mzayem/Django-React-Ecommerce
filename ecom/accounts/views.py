@@ -64,3 +64,6 @@ def activate_email (request, email_token):
     except Exception as e:
         return HttpResponse("Invalid token")
     
+def cart (request):
+    return render(request, 'accounts/cart.html')
+    
