@@ -147,7 +147,7 @@
 
         </div> <!-- row.// -->
     
-        <a href="#" class="btn  btn-primary"> Buy now </a>
+        <a href="{% url 'buy_now' product.uid%}?size={{selected_size}}&color={{selected_color}}" class="btn  btn-primary"> Buy now </a>
         <a href="{% url 'add_to_cart' product.uid%}?size={{selected_size}}&color={{selected_color}}" class="btn  btn-outline-primary"> <span class="text">Add to cart</span> <i class="fas fa-shopping-cart"></i>  </a>
     </article> <!-- product-info-aside .// -->
             </main> <!-- col.// -->

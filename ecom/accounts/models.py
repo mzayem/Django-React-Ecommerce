@@ -15,16 +15,49 @@ class Profile(BaseModel):
     email_token = models.CharField(max_length=100, null=True, blank=True)
     profile_image = models.ImageField(upload_to='profile')
 
+    def get_cart_count(self):
+        return CartItem.objects.filter(cart__is_paid=False, cart__user=self.user).count()
+    
 class Cart(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart')
     is_paid = models.BooleanField(default=False)
-    total_price = models.IntegerField(default=0)
+
+    
+
+    def get_cart_items(self):
+        # Return all cart items for the current cart
+        return self.cart_items.all()
+    
+    def get_cart_total(self):
+        cart_items = self.cart_items.all()
+        total_price = 0  # Initialize total price
+
+        for cart_item in cart_items:
+            product_price = cart_item.get_product_price()
+            total_price += product_price  # Add the product price to total
+
+        # Optionally: add price for size and color variants, if they exist
+            if cart_item.sizeVariant:
+                total_price += cart_item.sizeVariant.price
+        
+            if cart_item.colorVariant:
+                total_price += cart_item.colorVariant.price
+        return total_price
+
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
     colorVariant = models.ForeignKey(ColorVariant, on_delete=models.SET_NULL, null=True, blank=True)
     sizeVariant = models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True, blank=True)
+
+    def get_product_price(self):
+        price = self.product.price if self.product else 0
+        if self.colorVariant:
+            price += self.colorVariant.price if self.colorVariant else 0
+        if self.sizeVariant:
+            price += self.sizeVariant.price if self.sizeVariant else 0
+        return price
 
 
 

@@ -1,14 +1,18 @@
 from django.shortcuts import redirect,render
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login
+from django.contrib.auth import logout as auth_logout
+from django.contrib.auth import update_session_auth_hash
 from django.http import HttpResponseRedirect, HttpResponse
 
-from .models import Profile
+from .models import Profile, Cart, CartItem
 
 # Create your views here.
 
 def login_page(request):
+    if request.user.is_authenticated:
+        return redirect('/')
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
@@ -33,6 +37,8 @@ def login_page(request):
     return render(request, 'accounts/login.html')
 
 def register_page(request):
+    if request.user.is_authenticated:
+        return redirect('/')
     if request.method == 'POST':
         first_name = request.POST.get('first_name')
         last_name = request.POST.get('last_name')
@@ -64,6 +70,83 @@ def activate_email (request, email_token):
     except Exception as e:
         return HttpResponse("Invalid token")
     
-def cart (request):
-    return render(request, 'accounts/cart.html')
+def logout_user(request):
+    auth_logout(request)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def profile_page(request):
+    if request.user.is_authenticated:
+        user = request.user
+        if request.method == 'POST':
+            email = request.POST.get('email')
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            profile_image = request.FILES.get('profile_image')
+
+            user.email = email
+            user.first_name = first_name
+            user.last_name = last_name
+            user.save()
+
+            profile = user.profile
+            if profile_image:
+                profile.profile_image = profile_image
+            profile.save()
+            return redirect('profile')
+
+        return render(request, 'accounts/profile.html', {'user': request.user})
+    else:
+        return redirect('/account/login')
+def change_password(request):
+    if not request.user.is_authenticated:
+        return redirect('/account/login')
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        retype_password = request.POST.get('retype_password')
+
+        if not request.user.check_password(current_password):
+            messages.error(request, "Current password is incorrect.")
+            return redirect('profile')
+
+        if new_password != retype_password:
+            messages.error(request, "New password and Retype password do not match.")
+            return redirect('profile')
+
+        request.user.set_password(new_password)
+        request.user.save()
+
+        # Keep the user logged in after changing the password
+        update_session_auth_hash(request, request.user)
+
+        messages.success(request, "Password changed successfully!")
+        return redirect('profile')
+
+    return redirect('profile') 
+
+def cart(request):
+    if not request.user.is_authenticated:
+         return redirect('/account/login')
+    else:
+
+        cart = Cart.objects.filter(is_paid=False, user=request.user).first()
+        
+        # Use the method defined in the Cart model to get the cart items
+        if cart:
+            cart_items = cart.get_cart_items()
+        else:
+            cart_items = []
+        
+        # Pass the cart items to the template
+        context = {'cart_items': cart_items, 'total_price': cart.get_cart_total()}
+        return render(request, 'accounts/cart.html', context= context)
     
+    
+
+def remove_cart(request, cart_item_uid):
+    try:
+        cart_item = CartItem.objects.get(uid=cart_item_uid)
+        cart_item.delete()
+    except Exception as e:
+        print(e)
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
