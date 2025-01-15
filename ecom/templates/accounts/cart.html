@@ -7,6 +7,12 @@
     <div class="card">
     
     <table class="table table-borderless table-shopping-cart">
+    {% if not cart_items %}
+    <div class="alert ">
+        <p class="text-center text-muted">Your cart is empty</p>
+    </div>
+    
+    {%else%}
     <thead class="text-muted">
     <tr class="small text-uppercase">
       <th scope="col">Product</th>
@@ -28,13 +34,17 @@
                     </figcaption>
                 </figure>
             </td>
-            <td> 
-                <select class="form-control">
-                    <option>1</option>
-                    <option>2</option>    
-                    <option>3</option>    
-                    <option>4</option>    
-                </select> 
+            <td>
+                <form  method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="cart_item" value="{{ item.uid }}">
+                    <select onchange="this.form.submit()" class="form-control" name="quantity">
+                        <option value="1" {% if item.quantity == 1 %} selected {% endif %}>1</option>
+                        <option value="2" {% if item.quantity == 2 %} selected {% endif %}>2</option>    
+                        <option value="3" {% if item.quantity == 3 %} selected {% endif %}>3</option>    
+                        <option value="4" {% if item.quantity == 4 %} selected {% endif %}>4</option>     
+                    </select> 
+                </form>
             </td>
             <td> 
                 <div class="price-wrap"> 
@@ -48,11 +58,13 @@
         </tr>
         {%endfor%}
     </tbody>
-    
+    {% endif %}
     </table>
     
     <div class="card-body border-top">
-        <a href="#" class="btn btn-primary float-md-right"> Make Purchase <i class="fa fa-chevron-right"></i> </a>
+        {% if cart_items %}
+        <a href="/account/checkout" class="btn btn-primary float-md-right"> Make Purchase <i class="fa fa-chevron-right"></i> </a> 
+        {%endif%}
         <a href="/" class="btn btn-light"> <i class="fa fa-chevron-left"></i> Continue shopping </a>
     </div>	
     </div> <!-- card.// -->
@@ -87,11 +99,12 @@
             </div>  <!-- card .// -->
             <div class="card">
                 <div class="card-body">
+                    {%if cart.coupon%}
                         <dl class="dlist-align">
-                          <dt>Total price:</dt>
-                          <dd class="text-right">USD {{total_price}}</dd>
+                          <dt>Sub Total:</dt>
+                          <dd class="text-right">USD {{sub_total_price}}</dd>
                         </dl>
-                        {%if cart.coupon%}
+                        
                         <dl class="dlist-align">
                           <dt>Discount:</dt>
                           <dd class="text-right">-{{cart.coupon.discount_price}}</dd>

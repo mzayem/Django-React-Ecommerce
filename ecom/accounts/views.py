@@ -5,8 +5,10 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth import update_session_auth_hash
 from django.http import HttpResponseRedirect, HttpResponse
+from django.utils import timezone
 
-from .models import Profile, Cart, CartItem
+
+from .models import Profile, Cart, CartItem, Order
 from products.models import Coupon
 
 # Create your views here.
@@ -136,6 +138,13 @@ def cart(request):
             cart_items = cart.get_cart_items()
         else:
             cart_items = []
+        if request.method == 'POST':
+            quantity = request.POST.get('quantity')
+            cart_item = request.POST.get('cart_item')
+            print(quantity, cart_item)
+            cart_item_obj = CartItem.objects.filter(cart=cart, uid=cart_item)
+            cart_item_obj.update(quantity=quantity)
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         
         if request.method == 'POST':
             coupon = request.POST.get('coupon')
@@ -161,8 +170,8 @@ def cart(request):
         
         
     
-
-        context = {'cart_items': cart_items, 'total_price': total_price, 'cart':cart}
+        sub_total_price = total_price + cart.coupon.discount_price if cart.coupon else total_price
+        context = {'cart_items': cart_items, 'total_price': total_price, 'cart':cart, 'sub_total_price': sub_total_price}
         return render(request, 'accounts/cart.html', context= context)
     
     
@@ -186,3 +195,57 @@ def remove_coupon(request, cart_id):
     else:
         messages.warning(request, "No coupon applied")
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def checkout(request):
+    if not request.user.is_authenticated:
+         return redirect('/account/login')
+    else:
+        cart = Cart.objects.filter(is_paid=False, user=request.user).first()
+        total_price = cart.get_cart_total()
+        sub_total_price = total_price + cart.coupon.discount_price if cart.coupon else total_price
+        
+        if cart:
+            cart_items = cart.get_cart_items()
+        else:
+            cart_items = []
+        
+        if request.method == 'POST':
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            email = request.POST.get('email')
+            phone = request.POST.get('phone')
+            address = request.POST.get('address')
+            state = request.POST.get('state')
+            city = request.POST.get('city')
+            payment_method = request.POST.get('payment_method')
+
+            print(first_name, last_name, email, phone, address, state, city, payment_method)
+            
+            if not all([first_name, last_name, email, phone, address, state, city, payment_method]):
+                messages.warning(request, "Please fill out all required fields.")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            if  not cart or not cart.cart_items.exists():
+                messages.error(request, "Your cart is empty.")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            
+            order = Order.objects.create(user=request.user,
+                                            cart=cart, 
+                                            order_date=timezone.now(), 
+                                            status="pending",
+                                            first_name=first_name, 
+                                            last_name=last_name, 
+                                            email=email, 
+                                            phone=phone, 
+                                            address=address, 
+                                            state=state, 
+                                            city=city, 
+                                            payment_method=payment_method,
+                                            total_price=total_price)
+            for item in cart.cart_items.all(): 
+                order.cart_items.add(item)
+            order.save()
+            cart.is_paid=True
+            cart.save()
+            return render(request, 'accounts/order_success.html', {'order': order})
+        
+        return render(request, 'accounts/checkout.html', {'cart_items': cart_items, 'total_price': total_price, 'cart':cart, 'sub_total_price': sub_total_price})

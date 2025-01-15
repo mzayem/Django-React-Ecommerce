@@ -47,6 +47,7 @@ class Cart(BaseModel):
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='cart_items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True)
+    quantity = models.IntegerField(default=1)
     colorVariant = models.ForeignKey(ColorVariant, on_delete=models.SET_NULL, null=True, blank=True)
     sizeVariant = models.ForeignKey(SizeVariant, on_delete=models.SET_NULL, null=True, blank=True)
 
@@ -56,7 +57,8 @@ class CartItem(BaseModel):
             price += self.colorVariant.price if self.colorVariant else 0
         if self.sizeVariant:
             price += self.sizeVariant.price if self.sizeVariant else 0
-        return price
+        return price * self.quantity
+
 
 
 
@@ -71,4 +73,27 @@ def send_email_token(sender, instance, created, **kwargs):
    
     except Exception as e:
         print(e)
+
+class Order(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='orders')
+    order_date = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=100, default="pending")
+    first_name = models.CharField(max_length=100, default="Delivery First Name")
+    last_name = models.CharField(max_length=100, default="Delivery Last Name")
+    email = models.CharField(max_length=100, default="Delivery Email")
+    phone = models.CharField(max_length=100, default="Delivery Phone")
+    address = models.CharField(max_length=100, default="Delivery Address")
+    state = models.CharField(max_length=100, default="Delivery State")
+    city = models.CharField(max_length=100, default="Delivery City")
+    state = models.CharField(max_length=100, default="Delivery State")
+    payment_method = models.CharField(max_length=100, default="cash on Delivery")
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    cart_items = models.ManyToManyField(CartItem, related_name="orders")
+
+    def get_order_items(self):
+        # Return all cart items for the current cart
+        return self.cart.cart_items.all()
+    
+
 
