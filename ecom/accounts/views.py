@@ -7,6 +7,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.http import HttpResponseRedirect, HttpResponse
 
 from .models import Profile, Cart, CartItem
+from products.models import Coupon
 
 # Create your views here.
 
@@ -51,7 +52,6 @@ def register_page(request):
             messages.warning(request, 'Email already registered')
             return HttpResponseRedirect(request.path_info)
         
-        print(email)
         
         user_obj = User.objects.create_user(first_name= first_name, last_name=last_name, email=email, username=email)
         user_obj.set_password(password)
@@ -130,15 +130,39 @@ def cart(request):
     else:
 
         cart = Cart.objects.filter(is_paid=False, user=request.user).first()
+        total_price = cart.get_cart_total()
         
-        # Use the method defined in the Cart model to get the cart items
         if cart:
             cart_items = cart.get_cart_items()
         else:
             cart_items = []
         
-        # Pass the cart items to the template
-        context = {'cart_items': cart_items, 'total_price': cart.get_cart_total()}
+        if request.method == 'POST':
+            coupon = request.POST.get('coupon')
+            coupon_obj= Coupon.objects.filter(coupon_code__icontains=coupon)
+            
+            if not coupon_obj:
+                messages.warning(request, "Invalid coupon code")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            if cart.coupon:
+                messages.warning(request, "Coupon already applied")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            if coupon_obj[0].is_expired:
+                messages.warning(request, "Coupon expired")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            if coupon_obj[0].minimum_amount > cart.get_cart_total():
+                amount_needed = coupon_obj[0].minimum_amount - cart.get_cart_total()
+                messages.warning(request, f"You need to spend {amount_needed} more to apply this coupon.")
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            cart.coupon = coupon_obj[0]
+            cart.save()
+            messages.success(request, "Coupon applied")
+            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+        
+        
+    
+
+        context = {'cart_items': cart_items, 'total_price': total_price, 'cart':cart}
         return render(request, 'accounts/cart.html', context= context)
     
     
@@ -150,3 +174,15 @@ def remove_cart(request, cart_item_uid):
     except Exception as e:
         print(e)
     return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+
+def remove_coupon(request, cart_id):
+    cart = Cart.objects.get(uid=cart_id)
+    if cart.coupon:
+        cart.coupon = None
+        cart.save()
+        messages.success(request, "Coupon removed")
+        
+        return HttpResponseRedirect('/account/cart')
+    else:
+        messages.warning(request, "No coupon applied")
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))

@@ -65,17 +65,24 @@
         <aside class="col-md-3">
             <div class="card mb-3">
                 <div class="card-body">
-                <form>
+                <form method="POST">
+                    {% csrf_token %}
+                    {% include 'base/alert.html' %}
                     <div class="form-group">
                         <label>Have coupon?</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" name="" placeholder="Coupon code">
+                            <input type="text" class="form-control" name="coupon" placeholder="Coupon code">
                             <span class="input-group-append"> 
-                                <button class="btn btn-primary">Apply</button>
+                                <button type="submit" class="btn btn-primary">Apply</button>
                             </span>
                         </div>
+                        
                     </div>
+                    
                 </form>
+                {%if cart.coupon%}
+                    <a href="{% url 'remove_coupon' cart.uid%}" class="btn py-0 btn-light">{{cart.coupon.coupon_code}} ❌ </a>
+                 {%endif%}
                 </div> <!-- card-body.// -->
             </div>  <!-- card .// -->
             <div class="card">
@@ -84,10 +91,12 @@
                           <dt>Total price:</dt>
                           <dd class="text-right">USD {{total_price}}</dd>
                         </dl>
+                        {%if cart.coupon%}
                         <dl class="dlist-align">
                           <dt>Discount:</dt>
-                          <dd class="text-right">0</dd>
+                          <dd class="text-right">-{{cart.coupon.discount_price}}</dd>
                         </dl>
+                        {%endif%}
                         <dl class="dlist-align">
                           <dt>Total:</dt>
                           <dd class="text-right  h5"><strong>${{total_price}}</strong></dd>

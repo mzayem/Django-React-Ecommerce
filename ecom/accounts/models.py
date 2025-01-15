@@ -7,6 +7,7 @@ from django.dispatch import receiver
 import uuid
 from base.email import send_account_activation_email
 from products.models import Product, ColorVariant, SizeVariant
+from products.models import Coupon
 
 
 class Profile(BaseModel):
@@ -20,6 +21,7 @@ class Profile(BaseModel):
     
 class Cart(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='cart')
+    coupon= models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True)
     is_paid = models.BooleanField(default=False)
 
     
@@ -36,12 +38,9 @@ class Cart(BaseModel):
             product_price = cart_item.get_product_price()
             total_price += product_price  # Add the product price to total
 
-        # Optionally: add price for size and color variants, if they exist
-            if cart_item.sizeVariant:
-                total_price += cart_item.sizeVariant.price
-        
-            if cart_item.colorVariant:
-                total_price += cart_item.colorVariant.price
+        if self.coupon:
+            return total_price - self.coupon.discount_price
+
         return total_price
 
 
