@@ -79,6 +79,7 @@ def logout_user(request):
 def profile_page(request):
     if request.user.is_authenticated:
         user = request.user
+
         if request.method == 'POST':
             email = request.POST.get('email')
             first_name = request.POST.get('first_name')
@@ -95,8 +96,9 @@ def profile_page(request):
                 profile.profile_image = profile_image
             profile.save()
             return redirect('profile')
+        user_orders = Order.objects.filter(user=user).order_by('-created_at')
 
-        return render(request, 'accounts/profile.html', {'user': request.user})
+        return render(request, 'accounts/profile.html', {'user': request.user, 'orders': user_orders})
     else:
         return redirect('/account/login')
 def change_password(request):
@@ -132,23 +134,26 @@ def cart(request):
     else:
 
         cart = Cart.objects.filter(is_paid=False, user=request.user).first()
-        total_price = cart.get_cart_total()
+        total_price = 0
+        sub_total_price = 0
         
         if cart:
             cart_items = cart.get_cart_items()
+            total_price = cart.get_cart_total()
         else:
             cart_items = []
         if request.method == 'POST':
-            quantity = request.POST.get('quantity')
-            cart_item = request.POST.get('cart_item')
-            print(quantity, cart_item)
-            cart_item_obj = CartItem.objects.filter(cart=cart, uid=cart_item)
-            cart_item_obj.update(quantity=quantity)
-            return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+            form_type = request.POST.get('form_type')
+            if form_type == 'quantity_update':
+                quantity = request.POST.get('quantity')
+                cart_item = request.POST.get('cart_item')
+                cart_item_obj = CartItem.objects.filter(cart=cart, uid=cart_item)
+                cart_item_obj.update(quantity=quantity)
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         
-        if request.method == 'POST':
-            coupon = request.POST.get('coupon')
-            coupon_obj= Coupon.objects.filter(coupon_code__icontains=coupon)
+            if form_type == 'coupon':
+                coupon = request.POST.get('coupon')
+                coupon_obj= Coupon.objects.filter(coupon_code__icontains=coupon)
             
             if not coupon_obj:
                 messages.warning(request, "Invalid coupon code")
@@ -169,8 +174,8 @@ def cart(request):
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
         
         
-    
-        sub_total_price = total_price + cart.coupon.discount_price if cart.coupon else total_price
+        if cart.coupon:
+            sub_total_price = total_price + cart.coupon.discount_price if cart.coupon else total_price
         context = {'cart_items': cart_items, 'total_price': total_price, 'cart':cart, 'sub_total_price': sub_total_price}
         return render(request, 'accounts/cart.html', context= context)
     
@@ -201,11 +206,13 @@ def checkout(request):
          return redirect('/account/login')
     else:
         cart = Cart.objects.filter(is_paid=False, user=request.user).first()
-        total_price = cart.get_cart_total()
-        sub_total_price = total_price + cart.coupon.discount_price if cart.coupon else total_price
-        
+        total_price = 0
+        sub_total_price= 0
+
         if cart:
             cart_items = cart.get_cart_items()
+            total_price = cart.get_cart_total()
+            sub_total_price = total_price + cart.coupon.discount_price if cart.coupon else total_price
         else:
             cart_items = []
         

@@ -37,6 +37,7 @@
             <td>
                 <form  method="POST">
                     {% csrf_token %}
+                    <input type="hidden" name="form_type" value="quantity_update">
                     <input type="hidden" name="cart_item" value="{{ item.uid }}">
                     <select onchange="this.form.submit()" class="form-control" name="quantity">
                         <option value="1" {% if item.quantity == 1 %} selected {% endif %}>1</option>
@@ -83,6 +84,7 @@
                     <div class="form-group">
                         <label>Have coupon?</label>
                         <div class="input-group">
+                            <input type="hidden" name="form_type" value="coupon">
                             <input type="text" class="form-control" name="coupon" placeholder="Coupon code">
                             <span class="input-group-append"> 
                                 <button type="submit" class="btn btn-primary">Apply</button>

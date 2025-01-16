@@ -1,72 +1,122 @@
 {% extends "base/base.html" %}
 {% block start %}
 
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header text-center bg-primary text-white">
-                    <h4>Update Profile</h4>
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <main class="col-md-7">
+                <div class="card">
+                    <div class="card-body">
+                        <h4 class="text-dark">Update Profile</h4>
+                        <div class="card-body">
+                            <!-- Profile Update Form -->
+                            <form method="POST" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <!-- Profile Image -->
+                                <div class="text-center mb-4">
+                                    {% if user.profile.profile_image %}
+                                        <img src="{{ user.profile.profile_image.url }}" alt="Profile Photo" class="rounded-circle mb-3 border" width="120" height="120">
+                                    {% else %}
+                                        <img src="/static/images/default-profile.png" alt="Default Profile Photo" class="rounded-circle mb-3 border" width="120" height="120">
+                                    {% endif %}
+                                    <input type="file" name="profile_image" class="form-control" accept="image/*">
+                                </div>
+                                <!-- Email -->
+                                <div class="form-group mb-3">
+                                    <label for="email">Email</label>
+                                    <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}">
+                                </div>
+                                <!-- First Name -->
+                                <div class="form-group mb-3">
+                                    <label for="first_name">First Name</label>
+                                    <input type="text" id="first_name" name="first_name" class="form-control" value="{{ user.first_name }}">
+                                </div>
+                                <!-- Last Name -->
+                                <div class="form-group mb-3">
+                                    <label for="last_name">Last Name</label>
+                                    <input type="text" id="last_name" name="last_name" class="form-control" value="{{ user.last_name }}">
+                                </div>
+                                <!-- Submit Button -->
+                                <div class="form-group text-center">
+                                    <button type="submit" class="btn btn-primary">Update Profile</button>
+                                </div>
+                            </form>
+        
+                            <hr>
+        
+                            <!-- Password Update Form -->
+                            <form method="POST" action="{% url 'change_password' %}">
+                                {% csrf_token %}
+                                <div class="form-group mb-3">
+                                    <label for="current_password">Current Password</label>
+                                    <input type="password" id="current_password" name="current_password" class="form-control" required>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="new_password">New Password</label>
+                                    <input type="password" id="new_password" name="new_password" class="form-control" required>
+                                </div>
+                                <div class="form-group mb-3">
+                                    <label for="retype_password">Retype New Password</label>
+                                    <input type="password" id="retype_password" name="retype_password" class="form-control" required>
+                                </div>
+                                <div class="form-group text-center">
+                                    <button type="submit" class="btn btn-warning">Change Password</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <!-- Profile Update Form -->
-                    <form method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        <!-- Profile Image -->
-                        <div class="text-center mb-4">
-                            {% if user.profile.profile_image %}
-                                <img src="{{ user.profile.profile_image.url }}" alt="Profile Photo" class="rounded-circle mb-3" width="120" height="120">
-                            {% else %}
-                                <img src="/static/images/default-profile.png" alt="Default Profile Photo" class="rounded-circle mb-3" width="120" height="120">
-                            {% endif %}
-                            <input type="file" name="profile_image" class="form-control" accept="image/*">
-                        </div>
-                        <!-- Email -->
-                        <div class="form-group mb-3">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" class="form-control" value="{{ user.email }}">
-                        </div>
-                        <!-- First Name -->
-                        <div class="form-group mb-3">
-                            <label for="first_name">First Name</label>
-                            <input type="text" id="first_name" name="first_name" class="form-control" value="{{ user.first_name }}">
-                        </div>
-                        <!-- Last Name -->
-                        <div class="form-group mb-3">
-                            <label for="last_name">Last Name</label>
-                            <input type="text" id="last_name" name="last_name" class="form-control" value="{{ user.last_name }}">
-                        </div>
-                        <!-- Submit Button -->
-                        <div class="form-group text-center">
-                            <button type="submit" class="btn btn-primary">Update Profile</button>
-                        </div>
-                    </form>
+            </main>
+            <aside class="col-md-5">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h4 class="text-dark">Order History</h4>
                     
-                    <hr>
-
-                    <!-- Password Update Form -->
-                    <form method="POST" action="{% url 'change_password' %}">
-                        {% csrf_token %}
-                        <div class="form-group mb-3">
-                            <label for="current_password">Current Password</label>
-                            <input type="password" id="current_password" name="current_password" class="form-control" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="new_password">New Password</label>
-                            <input type="password" id="new_password" name="new_password" class="form-control" required>
-                        </div>
-                        <div class="form-group mb-3">
-                            <label for="retype_password">Retype New Password</label>
-                            <input type="password" id="retype_password" name="retype_password" class="form-control" required>
-                        </div>
-                        <div class="form-group text-center">
-                            <button type="submit" class="btn btn-warning">Change Password</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                        {% if orders %}
+                            {% for order in orders %}
+                                <div class="card mb-4">
+                                    <div class="card-header  text-secondary">
+                                        <h7>Order ID: {{ order.uid }}</h7>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Order Date:</strong> {{ order.created_at|date:"Y-m-d H:i" }}</p>
+                                        <p><strong>Total Price:</strong> ${{ order.total_price }}</p>
+                                        <p><strong>Status:</strong> {{ order.status }}</p>
+                                        
+                                        <!-- Order Items Toggle -->
+                                        <button 
+                                            class="btn btn-outline-primary mb-3" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#order-items-{{ order.id }}">
+                                            View Items
+                                        </button>
+                                        
+                                        <!-- Collapsible Items -->
+                                        <div class="collapse" id="order-items-{{ order.id }}">
+                                            <ul class="list-group">
+                                                {% for item in order.cart_items.all %}
+                                                    <li class="list-group-item">
+                                                        <strong>{{ item.product.product_name }}</strong><br>
+                                                        Quantity: {{ item.quantity }}<br>
+                                                        Size: {{ item.sizeVariant.size_name }}<br>
+                                                        Color: {{ item.colorVariant.color_name }}
+                                                    </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-center">No orders found.</p>
+                        {% endif %}
+                    
+                    
+                    </div> <!-- card-body.// -->
+                </div>  <!-- card .// -->
+            </aside>
         </div>
     </div>
-</div>
+</section>
 
 {% endblock %}

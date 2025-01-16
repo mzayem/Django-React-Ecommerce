@@ -1,0 +1,37 @@
+{% extends "base/base.html" %}
+
+{% block start %}
+<section class="section-content padding-y">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="title text-dark">Search Results</h2>
+                <hr/>
+                
+                <!-- Display Search Results -->
+                {% if products %}
+                    <div class="row">
+                        {% for product in products %}
+                        <div class="col-md-3">
+                            <figure class="card card-product-grid">
+                                <div class="img-wrap overflow-hidden"> <img src="/media/{{product.product_images.first.image}}" alt="{{product.product_name}} image" class="img-fluid w-100 h-100 object-fit-cover">> </div>
+                                <figcaption class="info-wrap border-top">
+                                    <a href="{% url 'get_product' product.slug%}" class="title">
+                                        <b>{{product.product_name}}</b>
+                                    </a>
+                                    <div class="price mt-2">${{product.price}}.00</div> <!-- price-wrap.// -->
+                                </figcaption>
+                            </figure> <!-- card // -->
+                        </div> <!-- col.// -->
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning" role="alert">
+                        No products found for "{{ request.GET.query }}".
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

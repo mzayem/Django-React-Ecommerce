@@ -81,4 +81,15 @@
         </div>
     </div>
 </section>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // If it's a GET request, no action needed
+     
+        // Redirect to homepage if the page is refreshed
+        window.onbeforeunload = function() {
+            window.location.href = '/';  // Redirect to the homepage
+        }
+    });
+</script>
 {% endblock %}

@@ -42,20 +42,23 @@ def add_to_cart(request, uid):
         if request.user.is_authenticated:
             product = Product.objects.get(uid=uid)
             user = request.user
-            cart, _ = Cart.objects.get_or_create(user=user, is_paid=False)
+            cart, _ = Cart.objects.get_or_create(user=user, is_paid=False)  
+            size_variant = product.size_variant.get(size_name=size)
+            color_variant = product.color_variant.get(color_name=color) 
 
-        # Create CartItem without 'size' and 'color' arguments
-            cart_item = CartItem(cart=cart, product=product)
-            if size:
-                size_variant = product.size_variant.get(size_name=size)
-                cart_item.sizeVariant = size_variant
+            existing_cart_item = CartItem.objects.filter(cart=cart, product=product, sizeVariant=size_variant, colorVariant=color_variant)
+            if existing_cart_item.exists():
+                cart_item = existing_cart_item[0]
+                cart_item.quantity += 1
+                cart_item.save()
+            else:
+                cart_item = CartItem(cart=cart, product=product)
+                if size:
+                    cart_item.sizeVariant = size_variant
 
-        
-            if color:
-                color_variant = product.color_variant.get(color_name=color)  # Corrected to color_name
-                cart_item.colorVariant = color_variant
-
-
+            
+                if color:
+                    cart_item.colorVariant = color_variant
             cart_item.save()
             return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
 
@@ -63,7 +66,7 @@ def add_to_cart(request, uid):
             return HttpResponseRedirect('/account/login')
         
     except Product.DoesNotExist:
-        return HttpResponseRedirect('/')  # Redirect to home or show error if product is not found
+        return HttpResponseRedirect('/')  
     
     
 
@@ -75,25 +78,27 @@ def buy_now(request, uid):
         if request.user.is_authenticated:
             product = Product.objects.get(uid=uid)
             user = request.user
-            cart, _ = Cart.objects.get_or_create(user=user, is_paid=False)
+            cart, _ = Cart.objects.get_or_create(user=user, is_paid=False)  
+            size_variant = product.size_variant.get(size_name=size)
+            color_variant = product.color_variant.get(color_name=color) 
 
-        # Create CartItem without 'size' and 'color' arguments
-            cart_item = CartItem(cart=cart, product=product)
-            if size:
-                size_variant = product.size_variant.get(size_name=size)
-                cart_item.sizeVariant = size_variant
+            existing_cart_item = CartItem.objects.filter(cart=cart, product=product, sizeVariant=size_variant, colorVariant=color_variant)
+            if existing_cart_item.exists():
+                cart_item = existing_cart_item[0]
+                cart_item.quantity += 1
+                cart_item.save()
+            else:
+                cart_item = CartItem(cart=cart, product=product)
+                if size:
+                    cart_item.sizeVariant = size_variant
 
-        
-            if color:
-                color_variant = product.color_variant.get(color_name=color)  # Corrected to color_name
-                cart_item.colorVariant = color_variant
-
-
+            
+                if color:
+                    cart_item.colorVariant = color_variant
             cart_item.save()
             return HttpResponseRedirect('/account/cart')
-
         else: 
             return HttpResponseRedirect('/account/login')
         
     except Product.DoesNotExist:
-        return HttpResponseRedirect('/')  # Redirect to home or show error if product is not found
+        return HttpResponseRedirect('/')  
