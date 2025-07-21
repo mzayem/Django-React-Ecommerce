@@ -1,4 +1,3 @@
-
 # 🛒 Django eCommerce Platform
 
 A full-featured Django-based eCommerce web application with product variations, coupon support, cart & checkout flow, and order management with **Cash on Delivery (COD)** as the default payment method. Includes a secure admin panel for complete control.
@@ -10,10 +9,12 @@ A full-featured Django-based eCommerce web application with product variations, 
 ```
 /django-ecommerce
 │
-├── ecommerce/             → Django project settings and URLs
-├── core/                  → Main app: models, views, URLs, templates
-├── media/                 → Uploaded product and profile images
-├── static/                → Static files: CSS, JS, fonts, etc.
+├── ecom/                  → Django project settings and URLs
+├── base/                  → Main app: models, views, URLs, templates
+├── public/                → Static files: CSS, JS, fonts, etc.
+├── Home/                  → Homepage modals, views, templates
+├── accounts/               → Account modals, views, templates
+├── product/               → Product modals, views, templates
 ├── templates/             → Base and app-specific templates
 ├── manage.py              → Django management script
 └── README.md              → This file
@@ -34,14 +35,14 @@ A full-featured Django-based eCommerce web application with product variations, 
 
 ## ⚙️ Technologies Used
 
-| Tech                  | Version     | Description                           |
-|----------------------|-------------|---------------------------------------|
-| Python               | 3.10+       | Programming language                  |
-| Django               | 4.2+        | Main web framework                    |
-| SQLite / PostgreSQL  | any         | Database backend                      |
-| Bootstrap            | 5           | Frontend styling                      |
-| Pillow               | latest      | Image processing                      |
-| Django Crispy Forms  | optional    | Enhanced form rendering               |
+| Tech                | Version  | Description             |
+| ------------------- | -------- | ----------------------- |
+| Python              | 3.10+    | Programming language    |
+| Django              | 4.2+     | Main web framework      |
+| SQLite / PostgreSQL | any      | Database backend        |
+| Bootstrap           | 5        | Frontend styling        |
+| Pillow              | latest   | Image processing        |
+| Django Crispy Forms | optional | Enhanced form rendering |
 
 ---
 
